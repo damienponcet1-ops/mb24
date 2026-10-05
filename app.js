@@ -61,6 +61,25 @@ function applyGridConfig() {
   $("gridLeft").value = gridConfig.left;
   $("gridWidth").value = gridConfig.width;
   $("gridHeight").value = gridConfig.height;
+  $("gridTopValue").textContent = `${gridConfig.top.toFixed(1)}%`;
+  $("gridLeftValue").textContent = `${gridConfig.left.toFixed(1)}%`;
+  $("gridWidthValue").textContent = `${gridConfig.width.toFixed(1)}%`;
+  $("gridHeightValue").textContent = `${gridConfig.height.toFixed(1)}%`;
+}
+
+function setGridEditing(enabled) {
+  $("boardContainer").classList.toggle("grid-editing", enabled);
+  $("gridPanel").classList.toggle("hidden", !enabled);
+}
+
+function updateGridPreview() {
+  gridConfig = {
+    top: Number($("gridTop").value),
+    left: Number($("gridLeft").value),
+    width: Number($("gridWidth").value),
+    height: Number($("gridHeight").value)
+  };
+  applyGridConfig();
 }
 
 function holdId(col, row) {
@@ -178,18 +197,20 @@ function getVisibleBlocks() {
   const query = $("searchInput").value.trim().toLowerCase();
   const benchmarkOnly = $("benchmarkOnly").checked;
   const completedOnly = $("completedOnly").checked;
+  const hideCompleted = $("hideCompleted")?.checked;
   const sort = $("sortSelect").value;
 
   let visible = blocks.filter(block => {
     if (benchmarkOnly && !block.benchmark) return false;
     if (completedOnly && !block.completed) return false;
+    if (hideCompleted && block.completed) return false;
     return !query || block.name.toLowerCase().includes(query);
   });
 
   visible.sort((a, b) => {
     if (sort === "grade") return a.grade.localeCompare(b.grade, "fr");
-    if (sort === "ascensions") return b.ascensionCount - a.ascensionCount;
-    return a.name.localeCompare(b.name, "fr", { numeric: true });
+    if (sort === "name") return a.name.localeCompare(b.name, "fr", { numeric: true });
+    return b.ascensionCount - a.ascensionCount;
   });
   return visible;
 }
@@ -239,44 +260,25 @@ function selectRelative(delta) {
 }
 
 function renderList() {
-  const query = $("searchInput").value.trim().toLowerCase();
-  const benchmarkOnly = $("benchmarkOnly").checked;
-  const completedOnly = $("completedOnly").checked;
-  const sort = $("sortSelect").value;
-
-  let visible = blocks.filter(block => {
-    if (benchmarkOnly && !block.benchmark) return false;
-    if (completedOnly && !block.completed) return false;
-    return !query || block.name.toLowerCase().includes(query);
-  });
-
-  visible.sort((a, b) => {
-    if (sort === "grade") return a.grade.localeCompare(b.grade, "fr");
-    if (sort === "ascensions") return b.ascensionCount - a.ascensionCount;
-    return a.name.localeCompare(b.name, "fr", { numeric: true });
-  });
+  const visible = getVisibleBlocks();
 
   $("blockCount").textContent = visible.length;
   const list = $("blockList");
-  list.innerHTML = "";
-
-  for (const block of visible) {
-    const item = document.createElement("div");
-    item.className = `block-item ${block.id === selectedId ? "selected" : ""}`;
-
-    const main = document.createElement("div");
-    main.innerHTML = `
-      <div class="block-name">${escapeHtml(block.name)}</div>
-      <div class="block-meta">${escapeHtml(block.grade)} · ${block.ascensionCount} ascension(s)</div>
-    `;
-
-    const badge = document.createElement("div");
-    badge.className = `badge ${block.benchmark ? "benchmark" : ""}`;
-    badge.textContent = block.benchmark ? "Benchmark" : (block.completed ? "✓" : "");
-
-    item.append(main, badge);
-    item.addEventListener("click", () => displayBlock(block));
-    list.appendChild(item);
+  if (list) {
+    list.innerHTML = "";
+    for (const block of visible) {
+      const item = document.createElement("div");
+      item.className = `block-item ${block.id === selectedId ? "selected" : ""}`;
+      item.innerHTML = `
+        <div>
+          <div class="block-name">${escapeHtml(block.name)}</div>
+          <div class="block-meta">${escapeHtml(block.grade)} · ${block.ascensionCount} ascension(s)</div>
+        </div>
+        <div class="badge ${block.benchmark ? "benchmark" : ""}">${block.benchmark ? "Benchmark" : (block.completed ? "✓" : "")}</div>
+      `;
+      item.addEventListener("click", () => displayBlock(block));
+      list.appendChild(item);
+    }
   }
   renderMobileControls();
 }
@@ -285,21 +287,22 @@ function renderSelectedInfo() {
   const block = blocks.find(b => b.id === selectedId);
   const info = $("selectedInfo");
 
-  if (!block) {
-    info.className = "selected-info empty";
-    info.textContent = "Aucun bloc sélectionné.";
-    return;
+  if (info) {
+    if (!block) {
+      info.className = "selected-info empty";
+      info.textContent = "Aucun bloc sélectionné.";
+    } else {
+      info.className = "selected-info";
+      info.innerHTML = `
+        <strong>${escapeHtml(block.name)}</strong><br>
+        Cotation : ${escapeHtml(block.grade || "—")}<br>
+        Départ : ${block.depart.join(", ") || "—"}<br>
+        Progression : ${block.progression.join(", ") || "—"}<br>
+        Arrivée : ${block.arrivee.join(", ") || "—"}<br>
+        Setter : ${escapeHtml(block.setby || "—")}<br>
+      `;
+    }
   }
-
-  info.className = "selected-info";
-  info.innerHTML = `
-    <strong>${escapeHtml(block.name)}</strong><br>
-    Cotation : ${escapeHtml(block.grade || "—")}<br>
-    Départ : ${block.depart.join(", ") || "—"}<br>
-    Progression : ${block.progression.join(", ") || "—"}<br>
-    Arrivée : ${block.arrivee.join(", ") || "—"}<br>
-    Setter : ${escapeHtml(block.setby || "—")}<br>
-  `;
   renderMobileControls();
 }
 
@@ -486,26 +489,33 @@ function importJsonFile(file) {
   reader.readAsText(file);
 }
 
-$("createBtn").addEventListener("click", startCreation);
+$("createBtn").addEventListener("click", () => {
+  closeDrawer();
+  startCreation();
+});
 $("cancelCreateBtn").addEventListener("click", cancelCreation);
 $("saveCreateBtn").addEventListener("click", saveCreation);
 $("confirmBlockBtn").addEventListener("click", confirmCreation);
-$("clearBtn").addEventListener("click", clearLeds);
+$("clearBtn").addEventListener("click", clearDatabase);
 $("connectBtn").addEventListener("click", connectBluetooth);
 
 $("gridBtn").addEventListener("click", () => {
-  $("gridPanel").classList.toggle("hidden");
+  closeDrawer();
+  setGridEditing(true);
+});
+
+["gridTop", "gridLeft", "gridWidth", "gridHeight"].forEach(id => {
+  $(id).addEventListener("input", updateGridPreview);
+});
+
+$("resetGridBtn").addEventListener("click", () => {
+  gridConfig = { ...DEFAULT_GRID };
+  applyGridConfig();
 });
 
 $("saveGridBtn").addEventListener("click", () => {
-  gridConfig = {
-    top: Number($("gridTop").value),
-    left: Number($("gridLeft").value),
-    width: Number($("gridWidth").value),
-    height: Number($("gridHeight").value)
-  };
   save(STORAGE.grid, gridConfig);
-  applyGridConfig();
+  setGridEditing(false);
   toast("Position de la grille enregistrée.");
 });
 
@@ -517,14 +527,45 @@ $("completedOnly").addEventListener("change", renderList);
 $("exportBtn").addEventListener("click", exportBlocks);
 $("backupBtn").addEventListener("click", exportBackup);
 $("importBtn").addEventListener("click", () => $("fileInput").click());
-$("restoreBtn").addEventListener("click", () => $("fileInput").click());
-
 $("fileInput").addEventListener("change", event => {
   const file = event.target.files[0];
   if (file) importJsonFile(file);
   event.target.value = "";
 });
 
+$("pasteBtn").addEventListener("click", pasteJson);
+$("deleteBtn").addEventListener("click", deleteSelectedBlock);
+
+$("sortPopularity").addEventListener("change", () => {
+  if ($("sortPopularity").checked) {
+    $("sortAlphabetical").checked = false;
+    $("sortSelect").value = "ascensions";
+    renderList();
+  }
+});
+$("sortAlphabetical").addEventListener("change", () => {
+  if ($("sortAlphabetical").checked) {
+    $("sortPopularity").checked = false;
+    $("sortSelect").value = "name";
+    renderList();
+  }
+});
+$("benchmarkFilter").addEventListener("change", e => {
+  $("benchmarkOnly").checked = e.target.checked;
+  renderList();
+});
+$("completedFilter").addEventListener("change", e => {
+  $("completedOnly").checked = e.target.checked;
+  if (e.target.checked) $("hideCompleted").checked = false;
+  renderList();
+});
+$("hideCompleted").addEventListener("change", e => {
+  if (e.target.checked) {
+    $("completedOnly").checked = false;
+    $("completedFilter").checked = false;
+  }
+  renderList();
+});
 
 $("routeSelect").addEventListener("change", e => {
   const block = blocks.find(b => b.id === e.target.value);
@@ -542,10 +583,97 @@ $("completedBtn").addEventListener("click", () => {
   renderList();
   renderSelectedInfo();
 });
-$("menuBtn").addEventListener("click", () => $("drawer").classList.remove("hidden"));
-$("drawerClose").addEventListener("click", () => $("drawer").classList.add("hidden"));
+
+function openDrawer() {
+  $("drawer").classList.remove("hidden");
+  $("drawerBackdrop").classList.remove("hidden");
+}
+
+function closeDrawer() {
+  $("drawer").classList.add("hidden");
+  $("drawerBackdrop").classList.add("hidden");
+}
+
+$("menuBtn").addEventListener("click", openDrawer);
+$("drawerClose").addEventListener("click", closeDrawer);
+$("drawerBackdrop").addEventListener("click", closeDrawer);
+
+function deleteSelectedBlock() {
+  const block = blocks.find(b => b.id === selectedId);
+  if (!block) { toast("Aucun bloc affiché."); return; }
+  if (!confirm(`Supprimer « ${block.name} » ?`)) return;
+  blocks = blocks.filter(b => b.id !== selectedId);
+  selectedId = null;
+  save(STORAGE.blocks, blocks);
+  clearBoardVisuals();
+  renderList();
+  renderSelectedInfo();
+  closeDrawer();
+  toast("Bloc supprimé.");
+}
+
+function clearDatabase() {
+  if (!blocks.length) { toast("La base est déjà vide."); return; }
+  if (!confirm("Vider toute la base des blocs ? Cette action est irréversible.")) return;
+  blocks = [];
+  selectedId = null;
+  save(STORAGE.blocks, blocks);
+  clearBoardVisuals();
+  renderList();
+  renderSelectedInfo();
+  closeDrawer();
+  toast("Base vidée.");
+}
+
+function pasteJson() {
+  const raw = prompt("Colle ici ton JSON de blocs :");
+  if (!raw) return;
+  try {
+    const parsed = JSON.parse(raw);
+    const source = Array.isArray(parsed) ? parsed : (parsed.data || parsed.blocks || [parsed]);
+    blocks = source.map(normalizeBlock);
+    if (parsed.gridConfig) {
+      gridConfig = { ...DEFAULT_GRID, ...parsed.gridConfig };
+      save(STORAGE.grid, gridConfig);
+      applyGridConfig();
+    }
+    save(STORAGE.blocks, blocks);
+    selectedId = null;
+    clearBoardVisuals();
+    renderList();
+    renderSelectedInfo();
+    closeDrawer();
+    toast(`${blocks.length} bloc(s) importé(s).`);
+  } catch (error) {
+    console.error(error);
+    toast("JSON invalide.");
+  }
+}
 
 createGrid();
 applyGridConfig();
 renderList();
 renderSelectedInfo();
+
+
+// --- Robust UI wiring for GitHub Pages / mobile browsers ---
+// These globals make the two critical menu actions available even when the
+// page is interacted with before the rest of the UI has finished rendering.
+window.moonboardStartCreation = startCreation;
+window.moonboardOpenGridEditor = function () {
+  closeDrawer();
+  setGridEditing(true);
+  applyGridConfig();
+  const panel = $("gridPanel");
+  requestAnimationFrame(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }));
+};
+
+// Use direct onclick handlers for the two menu actions so they cannot be
+// broken by a duplicated/old listener after a GitHub Pages update.
+$("createBtn").onclick = () => {
+  closeDrawer();
+  startCreation();
+  requestAnimationFrame(() => $("creationBanner").scrollIntoView({ behavior: "smooth", block: "nearest" }));
+};
+$("gridBtn").onclick = () => window.moonboardOpenGridEditor();
+$("addBtn").onclick = () => startCreation();
