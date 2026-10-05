@@ -6,6 +6,24 @@
   <meta name="theme-color" content="#111111">
   <title>Moon Board 2024</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Réglage grille : aperçu très lisible sans recouvrir le plateau */
+    .board-container.grid-editing .hold-cell::before{
+      width:82%;height:82%;border:2px dashed rgba(255,255,255,.96);
+      background:rgba(0,0,0,.10);
+      box-shadow:0 0 5px rgba(0,0,0,.95), inset 0 0 3px rgba(255,255,255,.18);
+      z-index:2;
+    }
+    .board-container.grid-editing .hold-cell:hover::before{
+      border-color:#ffbd00;
+      box-shadow:0 0 9px rgba(255,189,0,.85), inset 0 0 4px rgba(255,255,255,.25);
+    }
+    .grid-panel{
+      position:relative;z-index:20;
+      box-shadow:0 8px 28px rgba(0,0,0,.45);
+      scroll-margin-top:12px;
+    }
+  </style>
 </head>
 <body>
   <header class="topbar">
@@ -95,7 +113,7 @@
       <button id="exportBtn" class="drawer-action green"><span class="drawer-icon">📤</span><span>Exporter Blocs (Brut)</span></button>
       <button id="backupBtn" class="drawer-action blue"><span class="drawer-icon">💾</span><span>Sauvegarde complète (Total)</span></button>
       <button id="createBtn" class="drawer-action orange"><span class="drawer-icon">✏️</span><span>Créer un bloc</span></button>
-      <button id="gridBtn" class="drawer-action gray" type="button" onclick="document.getElementById('drawer').classList.add('hidden');document.getElementById('drawerBackdrop').classList.add('hidden');document.getElementById('boardContainer').classList.add('grid-editing');document.getElementById('gridPanel').classList.remove('hidden');"><span class="drawer-icon">⚙️</span><span>Ajuster la grille</span></button>
+      <button id="gridBtn" class="drawer-action gray" type="button" onclick="(function(){const d=document.getElementById('drawer'),b=document.getElementById('drawerBackdrop'),board=document.getElementById('boardContainer'),panel=document.getElementById('gridPanel');d.classList.add('hidden');b.classList.add('hidden');board.classList.add('grid-editing');panel.classList.remove('hidden');setTimeout(function(){panel.scrollIntoView({behavior:'smooth',block:'nearest'});},80);})()"><span class="drawer-icon">⚙️</span><span>Ajuster la grille</span></button>
       <button id="deleteBtn" class="drawer-action red"><span class="drawer-icon">🗑️</span><span>Supprimer le bloc affiché</span></button>
 
       <div class="drawer-separator"></div>
