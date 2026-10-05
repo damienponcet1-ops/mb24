@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>MoonBoard 2024</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="connectBtn" class="ble-button" aria-label="Connexion Bluetooth">ᛒ</button>
+    <div class="brand">
+      <h1>MoonBoard 2024</h1>
+      <div id="bleStatus" class="ble-status">Bluetooth déconnecté</div>
+    </div>
+    <button id="menuBtn" class="menu-button" aria-label="Menu">☰</button>
+  </header>
+
+  <main class="app">
+    <section class="route-controls">
+      <select id="routeSelect" class="route-select" aria-label="Bloc sélectionné">
+        <option value="">Aucun bloc sélectionné</option>
+      </select>
+      <button id="searchOpenBtn" class="icon-button" aria-label="Rechercher">⌕</button>
+    </section>
+
+    <section id="searchPanel" class="search-panel hidden">
+      <input id="searchInput" type="search" placeholder="Rechercher un bloc…">
+      <select id="sortSelect">
+        <option value="name">Nom</option>
+        <option value="grade">Cotation</option>
+        <option value="ascensions">Ascensions</option>
+      </select>
+      <label><input id="benchmarkOnly" type="checkbox"> Benchmark</label>
+      <label><input id="completedOnly" type="checkbox"> Réalisés</label>
+    </section>
+
+    <section class="board-section">
+      <div id="boardContainer" class="board-container">
+        <img src="./moonboard_2024.jpg" class="board-image" alt="MoonBoard 2024">
+        <div id="gridOverlay" class="grid-overlay" aria-label="Grille MoonBoard 2024"></div>
+      </div>
+    </section>
+
+    <section class="pager">
+      <button id="prevBtn" class="pager-button" aria-label="Bloc précédent">◀</button>
+      <div id="pagerName" class="pager-name">Aucun bloc</div>
+      <button id="nextBtn" class="pager-button" aria-label="Bloc suivant">▶</button>
+    </section>
+
+    <section class="route-card">
+      <div id="selectedGrade" class="grade-box">—</div>
+      <button id="completedBtn" class="route-action" aria-label="Marquer comme réalisé">✓</button>
+      <button id="addBtn" class="route-action" aria-label="Créer un bloc">＋</button>
+      <div class="route-stats">
+        <span id="ascensionProgress">0/0</span>
+      </div>
+      <div class="setter-line">
+        <span>Ouvreur:</span> <strong id="selectedSetter">—</strong>
+        <span class="sep">Ascensions:</span> <strong id="selectedAscensions">0</strong>
+      </div>
+    </section>
+
+    <section id="creationBanner" class="creation-banner hidden">
+      <strong>Création</strong>
+      <span>Départ → progression → arrivée</span>
+      <button id="cancelCreateBtn">Annuler</button>
+      <button id="saveCreateBtn" class="primary">Enregistrer</button>
+    </section>
+
+    <section id="gridPanel" class="grid-panel hidden">
+      <h3>Positionnement de la grille</h3>
+      <div class="grid-fields">
+        <label>Haut<input id="gridTop" type="number" step="0.1"></label>
+        <label>Gauche<input id="gridLeft" type="number" step="0.1"></label>
+        <label>Largeur<input id="gridWidth" type="number" step="0.1"></label>
+        <label>Hauteur<input id="gridHeight" type="number" step="0.1"></label>
+      </div>
+      <button id="saveGridBtn" class="primary">Appliquer</button>
+    </section>
+
+    <aside id="drawer" class="drawer hidden">
+      <div class="drawer-header"><strong>MoonBoard 2024</strong><button id="drawerClose">×</button></div>
+      <button id="createBtn" class="drawer-action">＋ Créer un bloc</button>
+      <button id="clearBtn" class="drawer-action">Éteindre les LEDs</button>
+      <button id="gridBtn" class="drawer-action">⚙ Grille</button>
+      <button id="importBtn" class="drawer-action">Importer JSON</button>
+      <button id="exportBtn" class="drawer-action">Exporter les blocs</button>
+      <button id="backupBtn" class="drawer-action">Sauvegarde complète</button>
+      <button id="restoreBtn" class="drawer-action">Restaurer</button>
+      <input id="fileInput" type="file" accept=".json,application/json" hidden>
+      <div class="drawer-count"><span id="blockCount">0</span> bloc(s)</div>
+    </aside>
+  </main>
+
+  <dialog id="blockDialog">
+    <form method="dialog" id="blockForm" class="dialog-form">
+      <h2>Nouveau bloc</h2>
+      <label>Nom<input id="blockName" required></label>
+      <label>Cotation<input id="blockGrade" value="6B+"></label>
+      <label>Méthode<input id="blockMethod"></label>
+      <label>Setter<input id="blockSetter"></label>
+      <label>Ascensions<input id="blockAscensions" type="number" min="0" value="0"></label>
+      <label class="checkbox-label"><input id="blockBenchmark" type="checkbox"> Benchmark</label>
+      <div class="dialog-actions">
+        <button value="cancel">Annuler</button>
+        <button id="confirmBlockBtn" value="default" class="primary">Créer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
