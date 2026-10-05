@@ -14,7 +14,7 @@
       <h1>Moon Board 2024</h1>
       <div id="bleStatus" class="ble-status">Bluetooth déconnecté</div>
     </div>
-    <button id="menuBtn" class="menu-button" aria-label="Menu">☰</button>
+    <button id="menuBtn" class="menu-button" type="button" aria-label="Menu" onclick="document.getElementById('drawer').classList.remove('hidden');document.getElementById('drawerBackdrop').classList.remove('hidden');">☰</button>
   </header>
 
   <main class="app">
@@ -86,16 +86,16 @@
       <button id="saveCreateBtn" class="primary">Enregistrer</button>
     </section>
 
-    <div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+    <div id="drawerBackdrop" class="drawer-backdrop hidden" onclick="document.getElementById('drawer').classList.add('hidden');this.classList.add('hidden');"></div>
     <aside id="drawer" class="drawer hidden">
-      <button id="drawerClose" class="drawer-close" aria-label="Fermer">×</button>
+      <button id="drawerClose" class="drawer-close" type="button" aria-label="Fermer" onclick="document.getElementById('drawer').classList.add('hidden');document.getElementById('drawerBackdrop').classList.add('hidden');">×</button>
 
       <button id="importBtn" class="drawer-action blue"><span class="drawer-icon">📥</span><span>Importer un fichier</span></button>
       <button id="pasteBtn" class="drawer-action orange"><span class="drawer-icon">📋</span><span>Coller un JSON</span></button>
       <button id="exportBtn" class="drawer-action green"><span class="drawer-icon">📤</span><span>Exporter Blocs (Brut)</span></button>
       <button id="backupBtn" class="drawer-action blue"><span class="drawer-icon">💾</span><span>Sauvegarde complète (Total)</span></button>
       <button id="createBtn" class="drawer-action orange"><span class="drawer-icon">✏️</span><span>Créer un bloc</span></button>
-      <button id="gridBtn" class="drawer-action gray"><span class="drawer-icon">⚙️</span><span>Ajuster la grille</span></button>
+      <button id="gridBtn" class="drawer-action gray" type="button" onclick="document.getElementById('drawer').classList.add('hidden');document.getElementById('drawerBackdrop').classList.add('hidden');document.getElementById('boardContainer').classList.add('grid-editing');document.getElementById('gridPanel').classList.remove('hidden');"><span class="drawer-icon">⚙️</span><span>Ajuster la grille</span></button>
       <button id="deleteBtn" class="drawer-action red"><span class="drawer-icon">🗑️</span><span>Supprimer le bloc affiché</span></button>
 
       <div class="drawer-separator"></div>
@@ -131,6 +131,8 @@
       <input id="fileInput" type="file" accept=".json,application/json" hidden>
       <div class="drawer-count"><span id="blockCount">0</span> bloc(s)</div>
     </aside>
+    <div id="blockList" hidden></div>
+    <div id="selectedInfo" hidden></div>
   </main>
 
   <dialog id="blockDialog">
